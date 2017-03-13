@@ -7,6 +7,9 @@ You must test your agent's strength against a set of agents with known
 relative strength using tournament.py and include the results in your report.
 """
 import random
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class Timeout(Exception):
@@ -79,9 +82,11 @@ class CustomPlayer:
         self.method = method
         self.time_left = None
         self.TIMER_THRESHOLD = timeout
-        self.init_method()
+        self.POSITIVE_INF = float("inf")
+        self.NEGATIVE_INF = float("-inf")
+        self.__init_method__()
 
-    def init_method(self):
+    def __init_method__(self):
         """
         Helper method: Initialize the alias to the proper searcg method.
         Sets the search method alias and also sets the method dictionary
@@ -149,7 +154,7 @@ class CustomPlayer:
             # when the timer gets close to expiring
             if self.iterative:
                 depth = 1
-                while True:
+                while True:  # let the time run out, better if we use "score"
                     score, best = self.method_alias(game, depth, maximizing_player=True)
                     depth += 1
             else:
@@ -158,7 +163,7 @@ class CustomPlayer:
 
         except Timeout:
             # Handle any actions required at timeout, if necessary
-            print("I, the agent, ran out of time. Returning whatever I can")
+            logger.debug("I, the agent, ran out of time. Returning whatever I can")
             return best
 
         # Return the best move from the last completed search iteration
@@ -213,7 +218,7 @@ class CustomPlayer:
                 next_state = game.forecast_move(move)
                 # need the score form minimax for this move, combined as this tuple
                 branches.append(
-                    (self.minimax(next_state, depth - 1, not (maximizing_player))[0], move))
+                    (self.minimax(next_state, depth - 1, not maximizing_player)[0], move))
 
         # set the eval function as alias for min or max depending on
         # if the player is maximizing or not
@@ -262,24 +267,33 @@ class CustomPlayer:
         if self.time_left() < self.TIMER_THRESHOLD:
             raise Timeout()
 
-        if depth == 0:
+        legal_moves_current_game = game.get_legal_moves()
+        if depth == 0 or len(legal_moves_current_game) <= 0:  # special case
             return self.score(game, self), (-1, -1)
 
-        branches = []
-        legal_moves_current_game = game.get_legal_moves()
+        best_move = legal_moves_current_game[0]  # set to the first one or whatever you want
+        # default values if extremes are set in the __init__ itself
+        best_score = self.NEGATIVE_INF if maximizing_player else self.POSITIVE_INF
 
-        if depth == 1:  # specical case, just get the scores of all legal moves
-            for move in legal_moves_current_game:
-                next_state = game.forecast_move(move)
-                branches.append((self.score(next_state, self), move))
-        else:
-            for move in legal_moves_current_game:
-                next_state = game.forecast_move(move)
-                # need the score form minimax for this move, combined as this tuple
-                branches.append(
-                    (self.minimax(next_state, depth - 1, not (maximizing_player))[0], move))
+        # explicit is better than implicit
+        new_alpha = alpha
+        new_beta = beta
 
-        # set the eval function as alias for min or max depending on
-        # if the player is maximizing or not
-        evaluation_func = max if maximizing_player else min
-        return evaluation_func(branches)
+        for move in legal_moves_current_game:
+            next_state = game.forecast_move(move)
+            # depth first, to find the score
+            score, move_dont_care = self.alphabeta(next_state, depth - 1, new_alpha, new_beta,
+                                                   not maximizing_player)
+            if (maximizing_player and score > best_score) or (
+                        not maximizing_player and score < best_score):
+                best_move = move
+                best_score = score
+                # no need to traverse further if maximizing and the score is smaller than
+                # or equal to what we already have, and if non-maximizing turn then
+                # greater than or equal to what we have. So break out of the branch
+                if (maximizing_player and beta <= best_score) or (
+                            not maximizing_player and alpha >= best_score):
+                    break
+                new_alpha = best_score if maximizing_player else alpha
+                new_beta = beta if maximizing_player else best_score
+        return best_score, best_move
