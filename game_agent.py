@@ -17,6 +17,49 @@ class Timeout(Exception):
     pass
 
 
+def moves_number(game, player):
+    """
+    util function that gives moves of player and opponent
+    :param game: game
+    :param player: current player
+    :return: moves of player, opponent
+    """
+    player_moves = len(game.get_legal_moves(player))
+    opponent_moves = len(game.get_legal_moves(game.get_opponent(player)))
+    return player_moves, opponent_moves
+
+
+def check_util(game, player, diff):
+    """
+    utility function to check the utility
+    :param game: game
+    :param player: current player
+    :return: return diff if util == 0. else util
+    """
+    util = game.utility(player)
+    return diff if util == 0. else util
+
+
+def h_moves_subtraction(game, player):
+    player_moves, opponent_moves = moves_number(game, player)
+    diff = float(player_moves - opponent_moves)
+    return check_util(game, player, diff)
+
+
+def h_move_subtraction_weighted(game, player):
+    player_moves, opponent_moves = moves_number(game, player)
+    player_weight = 1.1
+    opponent_weight = 0.7
+    diff = float(player_moves * player_weight - opponent_moves * opponent_weight)
+    return check_util(game, player, diff)
+
+
+def h_weighted_game_height_move_count(game, player):
+    player_moves, opponent_moves = moves_number(game, player)
+    diff = float(player_moves - opponent_moves * (game.move_count / game.height))
+    return check_util(game, player, diff)
+
+
 def custom_score(game, player):
     """Calculate the heuristic value of a game state from the point of view
     of the given player.
@@ -40,8 +83,12 @@ def custom_score(game, player):
         The heuristic value of the current game state to the specified player.
     """
 
-    # TODO: finish this function!
-    raise NotImplementedError
+    logger.debug("h_moves_subtraction: ", h_moves_subtraction(game, player))
+    logger.debug("h_move_subtraction_weighted: ", h_move_subtraction_weighted(game, player))
+    logger.debug("h_weighted_game_height_move_count: ",
+                 h_weighted_game_height_move_count(game, player))
+
+    return h_weighted_game_height_move_count(game, player)
 
 
 class CustomPlayer:
@@ -293,6 +340,7 @@ class CustomPlayer:
                 # greater than or equal to what we have. So break out of the branch
                 if (maximizing_player and beta <= best_score) or (
                             not maximizing_player and alpha >= best_score):
+                    logger.debug("Breaking out because this branch is not required")
                     break
                 new_alpha = best_score if maximizing_player else alpha
                 new_beta = beta if maximizing_player else best_score
