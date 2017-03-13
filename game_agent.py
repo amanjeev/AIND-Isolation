@@ -262,5 +262,24 @@ class CustomPlayer:
         if self.time_left() < self.TIMER_THRESHOLD:
             raise Timeout()
 
-        # TODO: finish this function!
-        raise NotImplementedError
+        if depth == 0:
+            return self.score(game, self), (-1, -1)
+
+        branches = []
+        legal_moves_current_game = game.get_legal_moves()
+
+        if depth == 1:  # specical case, just get the scores of all legal moves
+            for move in legal_moves_current_game:
+                next_state = game.forecast_move(move)
+                branches.append((self.score(next_state, self), move))
+        else:
+            for move in legal_moves_current_game:
+                next_state = game.forecast_move(move)
+                # need the score form minimax for this move, combined as this tuple
+                branches.append(
+                    (self.minimax(next_state, depth - 1, not (maximizing_player))[0], move))
+
+        # set the eval function as alias for min or max depending on
+        # if the player is maximizing or not
+        evaluation_func = max if maximizing_player else min
+        return evaluation_func(branches)
