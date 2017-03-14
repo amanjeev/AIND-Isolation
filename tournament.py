@@ -161,13 +161,12 @@ def main():
     # relative to the performance of the ID_Improved agent to account for
     # faster or slower computers.
     # h_move_subtraction_weighted, h_moves_subtraction, h_weighted_game_height_move_count
-    test_agents = [Agent(CustomPlayer(score_fn=improved_score, **CUSTOM_ARGS), "ID_Improved"),
-                   Agent(CustomPlayer(score_fn=h_move_improve_weighted, **CUSTOM_ARGS),
-                         "Student_h_move_improve_weighted"),
-                   Agent(CustomPlayer(score_fn=h_game_size_improve, **CUSTOM_ARGS),
-                         "Student_h_game_size_improve"),
-                   Agent(CustomPlayer(score_fn=h_weighted_game_height_move_count, **CUSTOM_ARGS),
-                         "Student_h_weighted_game_height_move_count")]
+    test_agents = [
+        Agent(CustomPlayer(score_fn=improved_score, **CUSTOM_ARGS), "ID_Improved"),
+        Agent(CustomPlayer(score_fn=h_move_improve_weighted, **CUSTOM_ARGS), "Student_h_move_improve_weighted"),
+        Agent(CustomPlayer(score_fn=h_weighted_game_height_move_count, **CUSTOM_ARGS), "Student_h_weighted_game_height_move_count"),
+        Agent(CustomPlayer(score_fn=h_game_size_improve, **CUSTOM_ARGS), "Student_h_game_size_improve"),
+    ]
 
     print(DESCRIPTION)
     for agentUT in test_agents:

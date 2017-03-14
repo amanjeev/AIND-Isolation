@@ -181,7 +181,7 @@ def custom_score(game, player):
     logger.debug("h_weighted_game_height_move_count: ",
                  h_weighted_game_height_move_count(game, player))
 
-    return h_weighted_game_height_move_count(game, player)
+    return h_game_size_improve(game, player)
 
 
 class CustomPlayer:
