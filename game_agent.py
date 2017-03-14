@@ -176,8 +176,8 @@ def custom_score(game, player):
         The heuristic value of the current game state to the specified player.
     """
 
-    logger.debug("h_moves_subtraction: ", h_moves_subtraction(game, player))
-    logger.debug("h_move_subtraction_weighted: ", h_move_subtraction_weighted(game, player))
+    logger.debug("h_move_improve_weighted: ", h_move_improve_weighted(game, player))
+    logger.debug("h_game_size_improve: ", h_game_size_improve(game, player))
     logger.debug("h_weighted_game_height_move_count: ",
                  h_weighted_game_height_move_count(game, player))
 
