@@ -18,10 +18,18 @@ class Timeout(Exception):
 
 
 def moves_number(game, player):
-    """
-    util function that gives moves of player and opponent
-    :param game: game
-    :param player: current player
+    """util function that gives moves of player and opponent
+
+    Parameters
+    ----------
+    game : `isolation.Board`
+        An instance of `isolation.Board` encoding the current state of the
+        game (e.g., player locations and blocked cells).
+
+    player : hashable
+        One of the objects registered by the game object as a valid player.
+        (i.e., `player` should be either game.__player_1__ or
+        game.__player_2__).
     :return: moves of player, opponent
     """
     player_moves = len(game.get_legal_moves(player))
@@ -30,33 +38,118 @@ def moves_number(game, player):
 
 
 def check_util(game, player, diff):
-    """
-    utility function to check the utility
-    :param game: game
-    :param player: current player
+    """ utility function to check the utility
+
+   Parameters
+    ----------
+    game : `isolation.Board`
+        An instance of `isolation.Board` encoding the current state of the
+        game (e.g., player locations and blocked cells).
+
+    player : hashable
+        One of the objects registered by the game object as a valid player.
+        (i.e., `player` should be either game.__player_1__ or
+        game.__player_2__).
+
     :return: return diff if util == 0. else util
     """
     util = game.utility(player)
     return diff if util == 0. else util
 
 
-def h_moves_subtraction(game, player):
-    player_moves, opponent_moves = moves_number(game, player)
-    diff = float(player_moves - opponent_moves)
-    return check_util(game, player, diff)
+def h_move_improve_weighted(game, player):
+    """Heuristic uses weighted improved score
 
+    Parameters
+    ----------
+    game : `isolation.Board`
+        An instance of `isolation.Board` encoding the current state of the
+        game (e.g., player locations and blocked cells).
 
-def h_move_subtraction_weighted(game, player):
+    player : hashable
+        One of the objects registered by the game object as a valid player.
+        (i.e., `player` should be either game.__player_1__ or
+        game.__player_2__).
+
+    Returns
+    ----------
+    float
+        The heuristic value of the current game state
+    """
+    if game.is_loser(player):
+        return float("-inf")
+    if game.is_winner(player):
+        return float("inf")
+
     player_moves, opponent_moves = moves_number(game, player)
-    player_weight = 1.1
+    player_weight = 1.9
     opponent_weight = 0.7
     diff = float(player_moves * player_weight - opponent_moves * opponent_weight)
     return check_util(game, player, diff)
 
 
 def h_weighted_game_height_move_count(game, player):
+    """Heuristic to improve by using game move and height ratio as compared to the
+    opponent's moves.
+
+    Parameters
+    ----------
+    game : `isolation.Board`
+        An instance of `isolation.Board` encoding the current state of the
+        game (e.g., player locations and blocked cells).
+
+    player : hashable
+        One of the objects registered by the game object as a valid player.
+        (i.e., `player` should be either game.__player_1__ or
+        game.__player_2__).
+
+    Returns
+    ----------
+    float
+        The heuristic value of the current game state
+    """
+    if game.is_loser(player):
+        return float("-inf")
+    if game.is_winner(player):
+        return float("inf")
+
     player_moves, opponent_moves = moves_number(game, player)
     diff = float(player_moves - opponent_moves * (game.move_count / game.height))
+    return check_util(game, player, diff)
+
+
+def h_game_size_improve(game, player):
+    """Game size, using the middle ground of the game to decide the improvement.
+    else it is just simple improved_score.
+
+    Parameters
+    ----------
+    game : `isolation.Board`
+        An instance of `isolation.Board` encoding the current state of the
+        game (e.g., player locations and blocked cells).
+
+    player : hashable
+        One of the objects registered by the game object as a valid player.
+        (i.e., `player` should be either game.__player_1__ or
+        game.__player_2__).
+
+    Returns
+    ----------
+    float
+        The heuristic value of the current game state
+    """
+    if game.is_loser(player):
+        return float("-inf")
+    if game.is_winner(player):
+        return float("inf")
+
+    player_moves, opponent_moves = moves_number(game, player)
+    game_total = game.width * game.height
+    game_move_count = game.move_count
+    if game_total * 0.3 <= game_move_count <= game_total * 0.7:
+        diff = float(player_moves - opponent_moves * (game.move_count / game.height))
+    else:
+        diff = float(player_moves - opponent_moves)
     return check_util(game, player, diff)
 
 
@@ -247,7 +340,7 @@ class CustomPlayer:
                 to pass the project unit tests; you cannot call any other
                 evaluation function directly.
         """
-        if self.time_left() < self.TIMER_THRESHOLD:
+        if self.time_left() < self.TIMER_THRESHOLD + 2:
             raise Timeout()
 
         if depth == 0:
@@ -270,6 +363,8 @@ class CustomPlayer:
         # set the eval function as alias for min or max depending on
         # if the player is maximizing or not
         evaluation_func = max if maximizing_player else min
+        if len(branches) <= 0:
+            return (-1, -1)
         return evaluation_func(branches)
 
     def alphabeta(self, game, depth, alpha=float("-inf"), beta=float("inf"),
@@ -311,7 +406,7 @@ class CustomPlayer:
                 to pass the project unit tests; you cannot call any other
                 evaluation function directly.
         """
-        if self.time_left() < self.TIMER_THRESHOLD:
+        if self.time_left() < self.TIMER_THRESHOLD + 2:
             raise Timeout()
 
         legal_moves_current_game = game.get_legal_moves()

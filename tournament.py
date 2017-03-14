@@ -31,7 +31,8 @@ from sample_players import null_score
 from sample_players import open_move_score
 from sample_players import improved_score
 from game_agent import CustomPlayer
-from game_agent import custom_score
+from game_agent import custom_score, h_move_improve_weighted, h_game_size_improve, \
+    h_weighted_game_height_move_count
 
 NUM_MATCHES = 5  # number of matches against each opponent
 TIME_LIMIT = 150  # number of milliseconds before timeout
@@ -136,7 +137,6 @@ def play_round(agents, num_matches):
 
 
 def main():
-
     HEURISTICS = [("Null", null_score),
                   ("Open", open_move_score),
                   ("Improved", improved_score)]
@@ -160,8 +160,14 @@ def main():
     # systems; i.e., the performance of the student agent is considered
     # relative to the performance of the ID_Improved agent to account for
     # faster or slower computers.
+    # h_move_subtraction_weighted, h_moves_subtraction, h_weighted_game_height_move_count
     test_agents = [Agent(CustomPlayer(score_fn=improved_score, **CUSTOM_ARGS), "ID_Improved"),
-                   Agent(CustomPlayer(score_fn=custom_score, **CUSTOM_ARGS), "Student")]
+                   Agent(CustomPlayer(score_fn=h_move_improve_weighted, **CUSTOM_ARGS),
+                         "Student_h_move_improve_weighted"),
+                   Agent(CustomPlayer(score_fn=h_game_size_improve, **CUSTOM_ARGS),
+                         "Student_h_game_size_improve"),
+                   Agent(CustomPlayer(score_fn=h_weighted_game_height_move_count, **CUSTOM_ARGS),
+                         "Student_h_weighted_game_height_move_count")]
 
     print(DESCRIPTION)
     for agentUT in test_agents:
